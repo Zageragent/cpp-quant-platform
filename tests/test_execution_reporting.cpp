@@ -45,7 +45,7 @@ int test_execution_reporting(){
   data::OhlcvBar b3{Symbol{"SPY"},t2,t3,data::BarInterval::Day1,Price{102},Price{104},Price{101},Price{103},Quantity{1000}};
   qp::Config bad_cfg; bad_cfg.set("data.path","examples/data/sample_bars.csv"); bad_cfg.set("portfolio.initial_cash","-1"); CHECK2(!backtest::backtest_config_from_flat_config(bad_cfg).ok()); qp::Config bad_numeric; bad_numeric.set("data.path","examples/data/sample_bars.csv"); bad_numeric.set("portfolio.initial_cash","1abc"); CHECK2(!backtest::backtest_config_from_flat_config(bad_numeric).ok());
   auto cfg = backtest::BacktestRunConfig{};
-  cfg.run_id="unit_run"; cfg.data_path="examples/data/sample_bars.csv"; cfg.output_dir="/tmp/qp_unit_report"; cfg.initial_cash=1000.0; cfg.buy_threshold=0.01; cfg.sell_threshold=-0.01;
+  cfg.run_id="unit_\"run\nwith_escape"; cfg.data_path="examples/data/sample_bars.csv"; cfg.output_dir="/tmp/qp_unit_report"; cfg.initial_cash=1000.0; cfg.buy_threshold=0.01; cfg.sell_threshold=-0.01;
   auto result=backtest::run_configured_momentum_backtest({b,b2,b3}, cfg);
   CHECK2(result.ok());
   CHECK2(result.value().bars_seen==3);
@@ -63,8 +63,10 @@ int test_execution_reporting(){
   CHECK2(std::filesystem::exists("/tmp/qp_unit_report/summary.txt"));
   std::ifstream in("/tmp/qp_unit_report/report.json"); std::string body((std::istreambuf_iterator<char>(in)),{});
   CHECK2(body.find("qp.backtest.report.v1") != std::string::npos);
+  CHECK2(body.find("unit_\\\"run\\nwith_escape") != std::string::npos);
   std::ifstream manifest_in("/tmp/qp_unit_report/manifest.json"); std::string manifest((std::istreambuf_iterator<char>(manifest_in)),{});
   CHECK2(manifest.find("qp.run_manifest.v1") != std::string::npos);
+  CHECK2(manifest.find("unit_\\\"run\\nwith_escape") != std::string::npos);
   CHECK2(manifest.find("equity.csv") != std::string::npos);
   CHECK2(manifest.find("fills.csv") != std::string::npos);
   CHECK2(manifest.find("input_data_fingerprint") != std::string::npos);
