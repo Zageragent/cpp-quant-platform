@@ -25,6 +25,7 @@ int test_execution_reporting(){
   BpsCommissionModel commission(BasisPoints{10.0});
   FixedBpsSlippageModel slippage(BasisPoints{5.0});
   ExecutionSimulator sim(commission, slippage);
+  auto causal_bad=sim.execute(Order{OrderId{99}, Symbol{"SPY"}, OrderSide::Buy, OrderType::Market, Quantity{1}, std::nullopt, TimeInForce::Day, t2, "unit"}, ExecutionContext{t1, data::MarketData{b}}); CHECK2(!causal_bad.ok());
   auto fill=sim.execute(buy, ExecutionContext{t1, data::MarketData{b}});
   CHECK2(fill.ok() && fill.value());
   CHECK2(fill.value()->side==OrderSide::Buy);
@@ -62,5 +63,11 @@ int test_execution_reporting(){
   CHECK2(std::filesystem::exists("/tmp/qp_unit_report/summary.txt"));
   std::ifstream in("/tmp/qp_unit_report/report.json"); std::string body((std::istreambuf_iterator<char>(in)),{});
   CHECK2(body.find("qp.backtest.report.v1") != std::string::npos);
+  std::ifstream manifest_in("/tmp/qp_unit_report/manifest.json"); std::string manifest((std::istreambuf_iterator<char>(manifest_in)),{});
+  CHECK2(manifest.find("qp.run_manifest.v1") != std::string::npos);
+  CHECK2(manifest.find("equity.csv") != std::string::npos);
+  CHECK2(manifest.find("fills.csv") != std::string::npos);
+  CHECK2(manifest.find("input_data_fingerprint") != std::string::npos);
+  CHECK2(manifest.find("config_fingerprint") != std::string::npos);
   return 0;
 }

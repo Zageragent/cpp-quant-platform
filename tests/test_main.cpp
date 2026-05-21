@@ -23,6 +23,7 @@
 static bool near(double a,double b,double eps=1e-9){ return std::fabs(a-b)<eps; }
 using namespace qp;
 int test_execution_reporting();
+int test_schema_artifacts();
 int main(){
   auto t0=Timestamp::from_unix_nanos(0), t1=Timestamp::from_unix_nanos(1), t2=Timestamp::from_unix_nanos(2), t3=Timestamp::from_unix_nanos(3);
   data::OhlcvBar b{Symbol{"spy"},t0,t1,data::BarInterval::Day1,Price{100},Price{101},Price{99},Price{100},Quantity{10}}; CHECK(b.symbol.value=="SPY"); CHECK(b.validate().ok());
@@ -40,6 +41,8 @@ int main(){
   labels::TripleBarrierLabeler tb(labels::TripleBarrierConfig{std::chrono::nanoseconds{2},std::chrono::nanoseconds{0},0.02,-0.02}); auto tl=tb.label(b,{b2,b3}); CHECK(tl.ok() && tl.value()); CHECK(tl.value()->value==1.0);
   signals::MomentumSignal ms(signals::MomentumConfig{"simple_return",0.01,-0.01,"mom"}); auto sig=ms.update(*r1.value()); CHECK(sig && sig->side==signals::SignalSide::Buy);
   replay::ReplayEvent e2=replay::MarketDataEvent{replay::SequenceNumber{2},t2,t2,data::MarketData{b2}}; replay::ReplayEvent e1=replay::MarketDataEvent{replay::SequenceNumber{1},t1,t1,data::MarketData{b}}; replay::VectorEventSource src({e2,e1}); struct Sink: replay::ReplaySink { int n=0; Result<void> on_event(const replay::ReplayEvent&) override { ++n; return Ok(); } } sink; replay::ReplayEngine eng; eng.add_sink(sink); auto stats=eng.run(src); CHECK(stats.ok()); CHECK(stats.value().events_dispatched==2); CHECK(sink.n==2); CHECK(eng.clock().now()->unix_nanos()==2);
+  replay::VectorEventSource dup_src({e1,e1}, false); replay::ReplayEngine dup_eng; auto dup_stats=dup_eng.run(dup_src); CHECK(!dup_stats.ok());
+  replay::VectorEventSource limited_src({e1,e2}, false); replay::ReplayEngine limited_eng(replay::ReplayConfig{true,true,std::nullopt,1}); auto limited=limited_eng.run(limited_src); CHECK(limited.ok()); CHECK(limited.value().events_seen==1); CHECK(limited.value().events_dispatched==1);
   portfolio::Portfolio pf(1000); CHECK(pf.buy(Symbol{"SPY"},Quantity{2},Price{100},1).ok()); CHECK(near(pf.cash(),799)); CHECK(near(pf.equity({{Symbol{"SPY"},Price{110}}}),1019)); CHECK(pf.sell(Symbol{"SPY"},Quantity{1},Price{120},1).ok()); CHECK(near(pf.cash(),918));
   std::ofstream csv("/tmp/qp_test_bars.csv"); csv << "symbol,start_ns,end_ns,open,high,low,close,volume\nSPY,0,1,100,101,99,100,10\n"; csv.close(); auto bars=data::read_ohlcv_csv("/tmp/qp_test_bars.csv"); CHECK(bars.ok()); CHECK(bars.value().size()==1); CHECK(bars.value()[0].symbol.value=="SPY");
   std::ofstream cfg_file("/tmp/qp_config.json"); cfg_file << "{\"seed\":42,\"threshold\":0.01,\"enabled\":true}"; cfg_file.close(); auto cfg=load_flat_json_config("/tmp/qp_config.json"); CHECK(cfg.ok()); CHECK(cfg.value().get_int("seed").value()==42); CHECK(near(cfg.value().get_double("threshold").value(),0.01)); CHECK(cfg.value().get_bool("enabled").value()); Config cfg2; cfg2.set("seed","43"); cfg2.set("threshold","0.01"); cfg2.set("enabled","true"); CHECK(stable_config_fingerprint(cfg.value()) != stable_config_fingerprint(cfg2));
@@ -47,5 +50,6 @@ int main(){
   auto wrong_symbol_label=fl.label(b,{other}); CHECK(wrong_symbol_label.ok() && !wrong_symbol_label.value());
   auto bt=backtest::run_simple_momentum_backtest({b,b2,b3}, backtest::SimpleBacktestConfig{1000.0,0.01,-0.01,0.0}); CHECK(bt.ok()); CHECK(bt.value().bars_seen==3); CHECK(bt.value().trades==1); CHECK(bt.value().position_quantity==1.0); CHECK(near(bt.value().final_equity,1001.0));
   CHECK(test_execution_reporting()==0);
+  CHECK(test_schema_artifacts()==0);
   std::cout << "all qp tests passed\n"; return 0;
 }

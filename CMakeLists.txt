@@ -44,6 +44,10 @@ add_library(qp_platform
   src/core/types.cpp
   src/core/diagnostics.cpp
   src/core/config.cpp
+  src/schema/schema_version.cpp
+  src/schema/validation.cpp
+  src/data/instrument.cpp
+  src/data/dataset_writer.cpp
   src/data/bar.cpp
   src/data/trade.cpp
   src/data/quote.cpp
@@ -53,14 +57,17 @@ add_library(qp_platform
   src/replay/event_source.cpp
   src/replay/replay_clock.cpp
   src/replay/replay_engine.cpp
+  src/features/feature.cpp
   src/features/rolling_window.cpp
   src/features/returns.cpp
   src/features/rolling_mean.cpp
   src/features/rolling_variance.cpp
+  src/labels/label.cpp
   src/labels/leakage_guard.cpp
   src/labels/forward_return.cpp
   src/labels/triple_barrier.cpp
   src/signals/momentum.cpp
+  src/signals/signal.cpp
   src/execution/order.cpp
   src/execution/fill.cpp
   src/execution/commission_model.cpp
@@ -86,7 +93,7 @@ endif()
 include(CTest)
 if(QP_BUILD_TESTS)
   enable_testing()
-  add_executable(qp_tests tests/test_main.cpp tests/test_execution_reporting.cpp)
+  add_executable(qp_tests tests/test_main.cpp tests/test_execution_reporting.cpp tests/test_schema_artifacts.cpp)
   target_link_libraries(qp_tests PRIVATE qp::platform qp::warnings qp::sanitizers)
   add_test(NAME qp.unit COMMAND qp_tests)
   if(QP_BUILD_APPS)

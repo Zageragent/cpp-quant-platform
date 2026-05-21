@@ -8,5 +8,6 @@
 #include <string_view>
 namespace qp::features {
 struct FeatureValue { Timestamp ts; Symbol symbol; std::string name; double value{0.0}; };
+[[nodiscard]] Result<void> validate(const FeatureValue& value);
 class Feature { public: virtual ~Feature()=default; [[nodiscard]] virtual std::string_view name() const noexcept=0; [[nodiscard]] virtual Result<std::optional<FeatureValue>> update(const data::MarketData& data)=0; virtual void reset()=0; };
 }
