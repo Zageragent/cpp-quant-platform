@@ -1,0 +1,2 @@
+#include "qp/execution/order.hpp"
+namespace qp::execution { Result<void> Order::validate() const { if(id.value==0) return Err(Error{ErrorCode::InvalidArgument,"order id must be non-zero"}); if(symbol.empty()) return Err(Error{ErrorCode::InvalidArgument,"order symbol empty"}); if(!quantity.is_positive()) return Err(Error{ErrorCode::InvalidArgument,"order quantity must be positive"}); if(type==OrderType::Limit && (!limit_price || !limit_price->is_positive())) return Err(Error{ErrorCode::InvalidArgument,"limit order requires positive limit price"}); return Ok(); } }

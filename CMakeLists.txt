@@ -61,8 +61,17 @@ add_library(qp_platform
   src/labels/forward_return.cpp
   src/labels/triple_barrier.cpp
   src/signals/momentum.cpp
+  src/execution/order.cpp
+  src/execution/fill.cpp
+  src/execution/commission_model.cpp
+  src/execution/slippage_model.cpp
+  src/execution/execution_simulator.cpp
   src/portfolio/portfolio.cpp
   src/backtest/simple_backtest.cpp
+  src/backtest/backtest_config.cpp
+  src/backtest/report.cpp
+  src/backtest/metrics.cpp
+  src/reporting/report_writer.cpp
 )
 add_library(qp::platform ALIAS qp_platform)
 target_include_directories(qp_platform PUBLIC $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include> $<INSTALL_INTERFACE:include>)
@@ -77,9 +86,14 @@ endif()
 include(CTest)
 if(QP_BUILD_TESTS)
   enable_testing()
-  add_executable(qp_tests tests/test_main.cpp)
+  add_executable(qp_tests tests/test_main.cpp tests/test_execution_reporting.cpp)
   target_link_libraries(qp_tests PRIVATE qp::platform qp::warnings qp::sanitizers)
   add_test(NAME qp.unit COMMAND qp_tests)
+  if(QP_BUILD_APPS)
+    add_test(NAME qp.cli_help COMMAND qp --help)
+    add_test(NAME qp.cli_validate_config COMMAND qp validate-config --config ${PROJECT_SOURCE_DIR}/examples/configs/simple_momentum.flat.json)
+    add_test(NAME qp.cli_backtest COMMAND qp backtest --config ${PROJECT_SOURCE_DIR}/examples/configs/simple_momentum.flat.json --output-dir ${PROJECT_BINARY_DIR}/cli_backtest_out)
+  endif()
 endif()
 
 if(QP_BUILD_BENCHMARKS)

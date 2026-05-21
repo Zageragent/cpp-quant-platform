@@ -22,16 +22,17 @@
 #define CHECK(x) do { if(!(x)){ std::cerr << "CHECK failed at " << __FILE__ << ":" << __LINE__ << " : " #x "\n"; return 1; } } while(false)
 static bool near(double a,double b,double eps=1e-9){ return std::fabs(a-b)<eps; }
 using namespace qp;
+int test_execution_reporting();
 int main(){
   auto t0=Timestamp::from_unix_nanos(0), t1=Timestamp::from_unix_nanos(1), t2=Timestamp::from_unix_nanos(2), t3=Timestamp::from_unix_nanos(3);
   data::OhlcvBar b{Symbol{"spy"},t0,t1,data::BarInterval::Day1,Price{100},Price{101},Price{99},Price{100},Quantity{10}}; CHECK(b.symbol.value=="SPY"); CHECK(b.validate().ok());
-  data::OhlcvBar bad=b; bad.high=Price{90}; CHECK(!bad.validate().ok());
+  data::OhlcvBar bad=b; bad.high=Price{90}; CHECK(!bad.validate().ok()); features::SimpleReturn invalid_feature; CHECK(!invalid_feature.update(data::MarketData{bad}).ok());
   data::Quote q{Symbol{"SPY"},t1,Price{100},Quantity{5},Price{101},Quantity{7}}; CHECK(q.validate().ok()); CHECK(near(q.mid().value,100.5)); CHECK(q.spread()>0);
   data::Quote crossed=q; crossed.bid_price=Price{102}; CHECK(!crossed.validate().ok());
   features::RollingWindow w(3); w.push(1); w.push(2); CHECK(!w.full()); w.push(3); CHECK(w.full()); CHECK(near(w.mean(),2)); w.push(4); CHECK(near(w.mean(),3));
   data::OhlcvBar b2{Symbol{"SPY"},t1,t2,data::BarInterval::Day1,Price{100},Price{103},Price{99},Price{102},Quantity{10}};
   data::OhlcvBar b3{Symbol{"SPY"},t2,t3,data::BarInterval::Day1,Price{102},Price{104},Price{101},Price{103},Quantity{10}};
-  features::SimpleReturn sr; auto r0=sr.update(data::MarketData{b}); CHECK(r0.ok() && !r0.value()); auto r1=sr.update(data::MarketData{b2}); CHECK(r1.ok() && r1.value()); CHECK(near(r1.value()->value,0.02));
+  features::SimpleReturn sr; auto r0=sr.update(data::MarketData{b}); CHECK(r0.ok() && !r0.value()); auto r1=sr.update(data::MarketData{b2}); CHECK(r1.ok() && r1.value()); CHECK(near(r1.value()->value,0.02)); CHECK(r1.value()->ts==t2);
   features::RollingMean rm(2); CHECK(!rm.update(data::MarketData{b}).value()); auto mv=rm.update(data::MarketData{b2}).value(); CHECK(mv && near(mv->value,101));
   features::RollingVariance rv(3,false); rv.update(data::MarketData{b}); rv.update(data::MarketData{b2}); auto vv=rv.update(data::MarketData{b3}).value(); CHECK(vv && near(vv->value, ( (100-101.6666666667)*(100-101.6666666667)+(102-101.6666666667)*(102-101.6666666667)+(103-101.6666666667)*(103-101.6666666667) )/3.0, 1e-6));
   labels::LeakageGuard guard; CHECK(!guard.validate(t1,t1,t2).ok()); CHECK(guard.validate(t1,t2,t3).ok());
@@ -45,5 +46,6 @@ int main(){
   features::SimpleReturn cross_symbol; CHECK(!cross_symbol.update(data::MarketData{b}).value()); data::OhlcvBar other{Symbol{"QQQ"},t1,t2,data::BarInterval::Day1,Price{10},Price{11},Price{9},Price{10},Quantity{1}}; CHECK(!cross_symbol.update(data::MarketData{other}).value()); auto spy_again=cross_symbol.update(data::MarketData{b2}); CHECK(spy_again.value() && near(spy_again.value()->value,0.02));
   auto wrong_symbol_label=fl.label(b,{other}); CHECK(wrong_symbol_label.ok() && !wrong_symbol_label.value());
   auto bt=backtest::run_simple_momentum_backtest({b,b2,b3}, backtest::SimpleBacktestConfig{1000.0,0.01,-0.01,0.0}); CHECK(bt.ok()); CHECK(bt.value().bars_seen==3); CHECK(bt.value().trades==1); CHECK(bt.value().position_quantity==1.0); CHECK(near(bt.value().final_equity,1001.0));
+  CHECK(test_execution_reporting()==0);
   std::cout << "all qp tests passed\n"; return 0;
 }
