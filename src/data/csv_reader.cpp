@@ -1,0 +1,7 @@
+#include "qp/data/csv_reader.hpp"
+#include <fstream>
+#include <sstream>
+namespace qp::data {
+static std::vector<std::string> split(const std::string& line, char d){ std::vector<std::string> out; std::string cell; std::stringstream ss(line); while(std::getline(ss, cell, d)) out.push_back(cell); return out; }
+Result<std::vector<OhlcvBar>> read_ohlcv_csv(const std::filesystem::path& path, CsvOptions options){ std::ifstream in(path); if(!in) return Err<std::vector<OhlcvBar>>(Error{ErrorCode::IoError,"failed to open OHLCV CSV",path.string()}); std::vector<OhlcvBar> bars; std::string line; if(options.has_header) std::getline(in,line); std::size_t row=1; while(std::getline(in,line)){ ++row; if(line.empty()) continue; auto c=split(line, options.delimiter); if(c.size()!=8) return Err<std::vector<OhlcvBar>>(Error{ErrorCode::ParseError,"OHLCV CSV row must have 8 columns",std::to_string(row)}); try { OhlcvBar b{Symbol{c[0]}, Timestamp::from_unix_nanos(std::stoll(c[1])), Timestamp::from_unix_nanos(std::stoll(c[2])), BarInterval::Day1, Price{std::stod(c[3])}, Price{std::stod(c[4])}, Price{std::stod(c[5])}, Price{std::stod(c[6])}, Quantity{std::stod(c[7])}}; if(options.strict){ auto ok=b.validate(); if(!ok) return Err<std::vector<OhlcvBar>>(ok.error()); } bars.push_back(b); } catch(const std::exception& e){ return Err<std::vector<OhlcvBar>>(Error{ErrorCode::ParseError,e.what(),std::to_string(row)}); } } return Ok(std::move(bars)); }
+}

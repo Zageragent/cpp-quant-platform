@@ -1,0 +1,3 @@
+#include "qp/features/rolling_window.hpp"
+#include <stdexcept>
+namespace qp::features { RollingWindow::RollingWindow(std::size_t c): capacity_(c){ if(c==0) throw std::invalid_argument("rolling window capacity must be positive"); } void RollingWindow::push(double v){ values_.push_back(v); sum_ += v; if(values_.size()>capacity_){ sum_ -= values_.front(); values_.pop_front(); } } double RollingWindow::mean() const noexcept { return values_.empty()?0.0:sum_/static_cast<double>(values_.size()); } double RollingWindow::oldest() const { return values_.front(); } double RollingWindow::newest() const { return values_.back(); } void RollingWindow::clear(){ values_.clear(); sum_=0.0; } }

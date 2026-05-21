@@ -1,0 +1,2 @@
+#include "qp/signals/momentum.hpp"
+namespace qp::signals { MomentumSignal::MomentumSignal(MomentumConfig c): config_(std::move(c)){} std::string_view MomentumSignal::name() const noexcept{return config_.name;} std::optional<Signal> MomentumSignal::update(const features::FeatureValue& f){ if(f.name!=config_.feature_name) return std::nullopt; SignalSide side=SignalSide::Flat; if(f.value>config_.buy_threshold) side=SignalSide::Buy; else if(f.value<config_.sell_threshold) side=SignalSide::Sell; return Signal{f.ts,f.symbol,config_.name,side,f.value}; } }

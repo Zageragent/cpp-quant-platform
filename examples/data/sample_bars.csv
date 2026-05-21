@@ -1,0 +1,4 @@
+symbol,start_ns,end_ns,open,high,low,close,volume
+SPY,0,1,100,101,99,100,1000
+SPY,1,2,100,103,99,102,1200
+SPY,2,3,102,104,101,103,1100

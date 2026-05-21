@@ -1,0 +1,15 @@
+{
+  "name": "cpp-quant-platform",
+  "version-semver": "0.1.0",
+  "description": "C++20 quantitative research platform foundation with deterministic replay and leakage-safe research primitives.",
+  "dependencies": [],
+  "features": {
+    "fmt": { "description": "Optional fmt formatting", "dependencies": ["fmt"] },
+    "spdlog": { "description": "Optional spdlog logging", "dependencies": ["spdlog"] },
+    "eigen": { "description": "Optional Eigen numerical utilities", "dependencies": ["eigen3"] },
+    "test": { "description": "Optional GoogleTest tests", "dependencies": ["gtest"] },
+    "benchmark": { "description": "Optional Google Benchmark benchmarks", "dependencies": ["benchmark"] },
+    "parquet": { "description": "Future Arrow/Parquet storage integration", "dependencies": ["arrow"] },
+    "osqp": { "description": "Future constrained optimizer backend", "dependencies": ["osqp"] }
+  }
+}

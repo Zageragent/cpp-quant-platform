@@ -1,0 +1,8 @@
+{
+  "run": { "id": "simple_momentum_example", "seed": 42, "output_dir": "out/simple_momentum" },
+  "data": { "type": "csv_bars", "path": "examples/data/sample_bars.csv", "timestamp_unit": "unix_nanos", "timezone": "UTC" },
+  "features": [{ "type": "simple_return", "name": "simple_return" }],
+  "strategy": { "type": "momentum", "feature_name": "simple_return", "buy_threshold": 0.01, "sell_threshold": -0.01 },
+  "execution": { "fill_model": "next_bar_close", "slippage_bps": 1.0, "commission_bps": 0.5 },
+  "portfolio": { "initial_cash": 100000.0, "base_currency": "USD" }
+}
