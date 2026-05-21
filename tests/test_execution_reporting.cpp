@@ -46,6 +46,9 @@ int test_execution_reporting(){
   qp::Config bad_cfg; bad_cfg.set("data.path","examples/data/sample_bars.csv"); bad_cfg.set("portfolio.initial_cash","-1"); CHECK2(!backtest::backtest_config_from_flat_config(bad_cfg).ok()); qp::Config bad_numeric; bad_numeric.set("data.path","examples/data/sample_bars.csv"); bad_numeric.set("portfolio.initial_cash","1abc"); CHECK2(!backtest::backtest_config_from_flat_config(bad_numeric).ok());
   auto cfg = backtest::BacktestRunConfig{};
   cfg.run_id="unit_\"run\nwith_escape"; cfg.data_path="examples/data/sample_bars.csv"; cfg.output_dir="/tmp/qp_unit_report"; cfg.initial_cash=1000.0; cfg.buy_threshold=0.01; cfg.sell_threshold=-0.01;
+  const auto effective_json = backtest::effective_config_json(cfg);
+  CHECK2(effective_json.find("unit_\\\"run\\nwith_escape") != std::string::npos);
+  CHECK2(effective_json.find("unit_\"run\nwith_escape") == std::string::npos);
   auto result=backtest::run_configured_momentum_backtest({b,b2,b3}, cfg);
   CHECK2(result.ok());
   CHECK2(result.value().bars_seen==3);
