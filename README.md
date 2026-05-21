@@ -35,28 +35,36 @@ cmake --build --preset release --parallel
 ./build/release/qp_bench_smoke --iterations 100000
 ```
 
-## WSL dev container
+## Windows / WSL dev container
 
-This repo includes a VS Code dev container that is intended to work from WSL with Docker Desktop or a WSL-accessible Docker Engine.
+This repo includes a VS Code dev container for Windows machines using WSL 2 and Docker Desktop.
 
-1. Open the repository from WSL:
+From an elevated Windows PowerShell prompt, run the prerequisite installer/checker:
 
-   ```bash
-   cd ~/cpp-quant-platform
-   code .
-   ```
+```powershell
+Set-ExecutionPolicy -Scope Process Bypass -Force
+.\scripts\windows\setup-devcontainer.ps1
+```
 
-2. In VS Code, run **Dev Containers: Reopen in Container**.
-3. The container installs the C++ toolchain, CMake 3.25+, Ninja, GDB, Valgrind, GitHub CLI, and VS Code C++/CMake extensions.
-4. On first create, it runs:
+Then open the repository from WSL:
 
-   ```bash
-   cmake --preset debug
-   cmake --build --preset debug --parallel
-   ctest --preset debug --output-on-failure
-   ```
+```bash
+git clone https://github.com/Zageragent/cpp-quant-platform.git
+cd cpp-quant-platform
+code .
+```
 
-Manual commands inside the container are the same as the quick-start commands above.
+In VS Code, run **Dev Containers: Reopen in Container**.
+
+The container installs the Linux C++ toolchain, CMake 3.25+, Ninja, GDB, Valgrind, GitHub CLI, and VS Code C++/CMake extensions. On first create, it runs:
+
+```bash
+cmake --preset debug
+cmake --build --preset debug --parallel
+ctest --preset debug --output-on-failure
+```
+
+See [docs/windows-devcontainer.md](docs/windows-devcontainer.md) for Docker Desktop, WSL integration, and troubleshooting details.
 
 ## Design principles
 
